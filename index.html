@@ -1,0 +1,922 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="UTF-8" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1, viewport-fit=cover"
+		/>
+		<title>Trivia Quiz — Live</title>
+		<style>
+			:root {
+				--bg: #0f172a;
+				--card: #1a2436;
+				--txt: #fff;
+				--sub: #9fb0c9;
+				--accent: #2f6fed;
+				padding-top: env(safe-area-inset-top, 0px);
+				padding-bottom: env(safe-area-inset-bottom, 0px);
+			}
+			html {
+				scroll-padding-top: env(safe-area-inset-top, 0px);
+			}
+			* {
+				box-sizing: border-box;
+			}
+			body {
+				margin: 0;
+				background: var(--bg);
+				color: var(--txt);
+				font-family:
+					system-ui,
+					-apple-system,
+					Segoe UI,
+					Roboto,
+					sans-serif;
+				min-height: 100%;
+			}
+			.wrap {
+				max-width: 640px;
+				margin: 0 auto;
+				padding: 20px 16px 40px;
+			}
+			.badge {
+				display: inline-block;
+				padding: 8px 16px;
+				border-radius: 8px;
+				font-weight: 700;
+				font-size: 13px;
+				letter-spacing: 0.3px;
+			}
+			.qnum {
+				float: right;
+				font-weight: 800;
+				font-size: 28px;
+				opacity: 0.9;
+			}
+			h2 {
+				font-size: 22px;
+				line-height: 1.3;
+				margin: 18px 0 20px;
+				min-height: 3.9em;
+			}
+			.opt {
+				background: var(--card);
+				border: 2px solid transparent;
+				border-radius: 10px;
+				padding: 14px 16px;
+				margin-bottom: 10px;
+				display: flex;
+				align-items: center;
+				gap: 12px;
+				cursor: pointer;
+				transition: 0.15s;
+			}
+			.opt:hover {
+				border-color: #2f6fed55;
+			}
+			.opt .let {
+				width: 28px;
+				height: 28px;
+				border-radius: 50%;
+				background: var(--accent);
+				color: #fff;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-weight: 700;
+				flex-shrink: 0;
+			}
+			.opt.picked {
+				border-color: var(--accent);
+			}
+			.opt.correct {
+				border-color: #3ecf6a;
+				background: #123821;
+			}
+			.opt.wrong {
+				border-color: #e5484d;
+				background: #3a1518;
+			}
+			.opt.disabled {
+				cursor: default;
+			}
+			.row {
+				display: flex;
+				gap: 10px;
+				margin-top: 18px;
+				flex-wrap: wrap;
+			}
+			button {
+				background: var(--accent);
+				color: #fff;
+				border: none;
+				border-radius: 8px;
+				padding: 12px 18px;
+				font-size: 15px;
+				font-weight: 600;
+				cursor: pointer;
+			}
+			button.sec {
+				background: #2a3650;
+			}
+			button:disabled {
+				opacity: 0.4;
+				cursor: default;
+			}
+			.center {
+				text-align: center;
+				padding-top: 15vh;
+			}
+			input {
+				background: var(--card);
+				border: 1px solid #2a3650;
+				color: #fff;
+				padding: 12px 14px;
+				border-radius: 8px;
+				font-size: 16px;
+				width: 100%;
+				max-width: 280px;
+			}
+			.namepill {
+				color: var(--sub);
+				font-size: 13px;
+				margin-bottom: 8px;
+			}
+			.namepill a {
+				color: var(--accent);
+				text-decoration: none;
+				cursor: pointer;
+			}
+			.lb {
+				background: var(--card);
+				border-radius: 10px;
+				padding: 12px 14px;
+				margin-bottom: 8px;
+				display: flex;
+				justify-content: space-between;
+			}
+			h1 {
+				font-size: 20px;
+				margin: 0 0 4px;
+			}
+			.sub {
+				color: var(--sub);
+				font-size: 14px;
+				margin-bottom: 20px;
+			}
+			.score {
+				font-size: 48px;
+				font-weight: 800;
+				text-align: center;
+				margin: 20px 0 6px;
+			}
+			.scoresub {
+				text-align: center;
+				color: var(--sub);
+				margin-bottom: 24px;
+			}
+			.gridwrap {
+				overflow-x: auto;
+				margin-top: 12px;
+				border: 1px solid #2a3650;
+				border-radius: 10px;
+			}
+			.agrid {
+				border-collapse: collapse;
+				font-size: 12px;
+			}
+			.agrid th,
+			.agrid td {
+				padding: 6px 8px;
+				text-align: center;
+				border-bottom: 1px solid #2a3650;
+				white-space: nowrap;
+			}
+			.agrid thead th {
+				background: var(--card);
+				font-weight: 700;
+			}
+			.agrid th.pname {
+				position: sticky;
+				left: 0;
+				background: var(--card);
+				text-align: left;
+				z-index: 1;
+			}
+			.agrid td.gcorrect {
+				color: #3ecf6a;
+				font-weight: 700;
+			}
+			.agrid td.gwrong {
+				color: #e5484d;
+				font-weight: 700;
+			}
+			.agrid .score-col {
+				position: sticky;
+				right: 0;
+				background: var(--card);
+				border-left: 2px solid #2a3650;
+				text-align: left;
+				z-index: 1;
+			}
+			.scorebits {
+				display: flex;
+				gap: 6px;
+				font-size: 11px;
+				white-space: nowrap;
+			}
+			.scoretotal {
+				font-weight: 800;
+				font-size: 15px;
+				margin-top: 2px;
+			}
+			.podium {
+				display: flex;
+				gap: 12px;
+				justify-content: center;
+				margin: 20px 0;
+				flex-wrap: wrap;
+			}
+			.podiumcard {
+				background: var(--card);
+				border-radius: 12px;
+				padding: 16px 20px;
+				text-align: center;
+				min-width: 90px;
+				border: 2px solid transparent;
+			}
+			.podiumcard.gold {
+				border-color: #ffd75e;
+			}
+			.podiumcard.silver {
+				border-color: #cfd8e3;
+			}
+			.podiumcard.bronze {
+				border-color: #d99a5b;
+			}
+			.podiumrank {
+				font-size: 12px;
+				color: var(--sub);
+			}
+			.podiumname {
+				font-weight: 700;
+				font-size: 16px;
+				margin: 4px 0;
+			}
+			.podiumscore {
+				font-size: 22px;
+				font-weight: 800;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="wrap" id="app"><div class="center">Loading…</div></div>
+		<script type="module">
+			import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+			import {
+				getDatabase,
+				ref,
+				push,
+				set,
+				get,
+				update,
+				remove,
+				onValue,
+				serverTimestamp,
+			} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js";
+
+			const ADMIN_PASS_B64 = "bWF0aWMx"; // base64, NOT secure — view-source decodes it instantly
+
+			const firebaseConfig = {
+				apiKey: "AIzaSyCvJ5cBvDusWYdhiI79dWrhg3il5jPKqMk",
+				authDomain: "nek-qviz.firebaseapp.com",
+				databaseURL:
+					"https://nek-qviz-default-rtdb.europe-west1.firebasedatabase.app",
+				projectId: "nek-qviz",
+				storageBucket: "nek-qviz.firebasestorage.app",
+				messagingSenderId: "199780109408",
+				appId: "1:199780109408:web:0d6541ac1cd09d356ac705",
+				measurementId: "G-ED45B68YRY",
+			};
+			const fbApp = initializeApp(firebaseConfig);
+			const db = getDatabase(fbApp);
+			const sessionId = crypto.randomUUID
+				? crypto.randomUUID()
+				: String(Date.now()) + Math.random();
+
+			function saveAnswer(q, qIdx, i, correct) {
+				push(ref(db, "answers"), {
+					session: sessionId,
+					name,
+					round: q.r,
+					qIndex: qIdx,
+					question: q.q,
+					choice: q.o[i],
+					letter: letters()[i],
+					correct,
+					ts: serverTimestamp(),
+				}).catch((e) => console.error("saveAnswer failed", e));
+			}
+			function saveSession(finalScore) {
+				set(ref(db, "sessions/" + sessionId), {
+					name,
+					score: finalScore,
+					total: QUESTIONS.length,
+					ts: serverTimestamp(),
+				}).catch((e) => console.error("saveSession failed", e));
+			}
+			let QUESTIONS = [];
+			async function loadQuestions() {
+				const snap = await get(ref(db, "questions"));
+				QUESTIONS = snap.val() || [];
+			}
+
+			const RC = { 1: "#2f6fed", 2: "#a3672e", 3: "#4c8c3f" };
+			const RN = {
+				1: "ROUND 1 • SLOVENIA",
+				2: "ROUND 2 • WARDOGS & HUNT",
+				3: "ROUND 3 • MINECRAFT",
+			};
+			const app = document.getElementById("app");
+			let name = localStorage.getItem("quizName") || "";
+			let best = Number(localStorage.getItem("quizBest") || 0);
+			let myAnswers = {},
+				score = 0,
+				sessionSaved = false,
+				lastGameId = null;
+			let currentState = {
+				idx: 0,
+				revealed: false,
+				gameId: null,
+				showResults: false,
+			};
+			let stateUnsub = null;
+			let adminUnsubs = [],
+				adminState = {
+					idx: 0,
+					revealed: false,
+					gameId: null,
+					showResults: false,
+				},
+				adminAnswers = {};
+			let restartArmed = false,
+				restartTimer = null;
+			let winnersArmed = false,
+				winnersTimer = null;
+			let lastAutoScrollRound = null;
+			function letters() {
+				return ["A", "B", "C", "D"];
+			}
+			function buildResultsData(answersObj, highlightIdx) {
+				const byName = {};
+				Object.values(answersObj || {}).forEach((a) => {
+					if (!a || !a.name) return;
+					byName[a.name] = byName[a.name] || {};
+					byName[a.name][a.qIndex] = {
+						letter: a.letter || letters()[0],
+						correct: a.correct,
+					};
+				});
+				const stats = {};
+				Object.keys(byName).forEach((p) => {
+					const perRound = { 1: 0, 2: 0, 3: 0 };
+					let total = 0;
+					Object.entries(byName[p]).forEach(([qi2, a]) => {
+						if (a.correct) {
+							const r = QUESTIONS[+qi2].r;
+							perRound[r] = (perRound[r] || 0) + 1;
+							total++;
+						}
+					});
+					stats[p] = { perRound, total };
+				});
+				const players = Object.keys(byName).sort(
+					(a, b) =>
+						stats[b].total - stats[a].total || a.localeCompare(b),
+				);
+				let gridHtml;
+				if (players.length === 0) {
+					gridHtml = '<p class="sub">No answers yet</p>';
+				} else {
+					const head =
+						'<th style="position:sticky;left:0;background:var(--card);z-index:2"></th>' +
+						QUESTIONS.map(
+							(q, i) =>
+								'<th data-qidx="' +
+								i +
+								'" style="color:' +
+								RC[q.r] +
+								(i === highlightIdx
+									? ";text-decoration:underline"
+									: "") +
+								'">' +
+								(i + 1) +
+								"</th>",
+						).join("") +
+						'<th class="score-col">Score</th>';
+					const bodyRows = players
+						.map((p) => {
+							const cells = QUESTIONS.map((q, i) => {
+								const a = byName[p][i];
+								if (!a) return "<td>—</td>";
+								return (
+									'<td class="' +
+									(a.correct ? "gcorrect" : "gwrong") +
+									'">' +
+									a.letter +
+									"</td>"
+								);
+							}).join("");
+							const st = stats[p];
+							const scoreCell =
+								'<td class="score-col">' +
+								'<div class="scorebits">' +
+								[1, 2, 3]
+									.map(
+										(r) =>
+											'<span style="color:' +
+											RC[r] +
+											'">R' +
+											r +
+											" " +
+											st.perRound[r] +
+											"</span>",
+									)
+									.join(" ") +
+								'</div><div class="scoretotal">' +
+								st.total +
+								"</div></td>";
+							return (
+								'<tr><th class="pname">' +
+								p +
+								"</th>" +
+								cells +
+								scoreCell +
+								"</tr>"
+							);
+						})
+						.join("");
+					gridHtml =
+						'<div class="gridwrap"><table class="agrid"><thead><tr>' +
+						head +
+						"</tr></thead><tbody>" +
+						bodyRows +
+						"</tbody></table></div>";
+				}
+				return { players, stats, gridHtml };
+			}
+
+			function renderName() {
+				app.innerHTML =
+					'<div class="center"><h1>Trivia Quiz</h1><p class="sub">Pick a nickname to start</p>' +
+					'<input id="ni" placeholder="Your name" maxlength="20"><div class="row" style="justify-content:center"><button id="go">Continue</button></div>' +
+					'<p class="sub" style="margin-top:24px"><a id="adminLink" style="color:var(--sub);cursor:pointer">Admin</a></p></div>';
+				document.getElementById("ni").focus();
+				document.getElementById("ni").onkeydown = (e) => {
+					if (e.key === "Enter")
+						document.getElementById("go").click();
+				};
+				document.getElementById("go").onclick = () => {
+					const v = document.getElementById("ni").value.trim();
+					if (!v) return;
+					name = v;
+					localStorage.setItem("quizName", v);
+					myAnswers = {};
+					score = 0;
+					sessionSaved = false;
+					render();
+				};
+				document.getElementById("adminLink").onclick = renderAdminLogin;
+			}
+			function renderAdminLogin() {
+				app.innerHTML =
+					'<div class="center"><h1>Admin Login</h1>' +
+					'<input id="ap" type="password" placeholder="Password">' +
+					'<div class="row" style="justify-content:center"><button id="al">Login</button><button class="sec" id="ab">Back</button></div>' +
+					'<p id="aerr" class="sub" style="color:#e5484d"></p></div>';
+				document.getElementById("ap").focus();
+				const tryLogin = () => {
+					const v = document.getElementById("ap").value;
+					if (v === atob(ADMIN_PASS_B64)) {
+						renderAdminPanel();
+					} else {
+						document.getElementById("aerr").textContent =
+							"Wrong password";
+					}
+				};
+				document.getElementById("ap").onkeydown = (e) => {
+					if (e.key === "Enter") tryLogin();
+				};
+				document.getElementById("al").onclick = tryLogin;
+				document.getElementById("ab").onclick = render;
+			}
+
+			function stopPlayerSync() {
+				if (stateUnsub) {
+					stateUnsub();
+					stateUnsub = null;
+				}
+			}
+			function startPlayerSync() {
+				if (stateUnsub) return;
+				stateUnsub = onValue(ref(db, "state"), (snap) => {
+					const s = snap.val() || {
+						idx: 0,
+						revealed: false,
+						gameId: null,
+						showResults: false,
+					};
+					if (lastGameId !== null && s.gameId !== lastGameId) {
+						myAnswers = {};
+						score = 0;
+						sessionSaved = false;
+					}
+					lastGameId = s.gameId !== undefined ? s.gameId : lastGameId;
+					currentState = s;
+					renderQuiz();
+				});
+			}
+			function renderQuiz() {
+				if (currentState.showResults) {
+					renderPlayerResults();
+					return;
+				}
+				const qi = currentState.idx || 0;
+				const Q = QUESTIONS[qi];
+				const mine = myAnswers[qi];
+				const revealed = !!currentState.revealed;
+				const locked = mine !== undefined || revealed;
+				let optsHtml = Q.o
+					.map((o, i) => {
+						let cls = mine === i ? "picked" : "";
+						if (revealed) {
+							if (i === Q.c) cls = "correct";
+							else if (i === mine) cls = "wrong";
+						}
+						if (locked) cls += " disabled";
+						return (
+							'<div class="opt ' +
+							cls +
+							'" data-i="' +
+							i +
+							'"><span class="let">' +
+							letters()[i] +
+							"</span><div>" +
+							o +
+							"</div></div>"
+						);
+					})
+					.join("");
+				let status;
+				if (!locked) status = '<p class="sub">Pick an answer</p>';
+				else if (revealed)
+					status =
+						'<p class="sub">Host revealed the answer' +
+						(mine === undefined ? " — you didn't answer" : "") +
+						"</p>";
+				else
+					status =
+						'<p class="sub">Answer locked in — waiting for host…</p>';
+				app.innerHTML =
+					'<div class="namepill">Playing as ' +
+					name +
+					' <a id="cn">(change)</a></div>' +
+					'<span class="badge" style="background:' +
+					RC[Q.r] +
+					'">' +
+					RN[Q.r] +
+					'</span><span class="qnum" style="color:' +
+					RC[Q.r] +
+					'">Q' +
+					(qi + 1) +
+					"/" +
+					QUESTIONS.length +
+					"</span>" +
+					"<h2>" +
+					Q.q +
+					"</h2>" +
+					optsHtml +
+					status +
+					'<div class="scoresub">Score so far: ' +
+					score +
+					"</div>";
+				document.getElementById("cn").onclick = () => {
+					stopPlayerSync();
+					localStorage.removeItem("quizName");
+					renderName();
+				};
+				if (!locked) {
+					app.querySelectorAll(".opt").forEach((el) => {
+						el.onclick = () => {
+							const i = +el.dataset.i;
+							myAnswers[qi] = i;
+							const correct = i === Q.c;
+							if (correct) score++;
+							saveAnswer(Q, qi, i, correct);
+							renderQuiz();
+						};
+					});
+				}
+				if (qi === QUESTIONS.length - 1 && revealed && !sessionSaved) {
+					sessionSaved = true;
+					if (score > best) {
+						best = score;
+						localStorage.setItem("quizBest", String(best));
+					}
+					saveSession(score);
+				}
+			}
+			async function renderPlayerResults() {
+				app.innerHTML = '<div class="center">Loading results…</div>';
+				let answersObj = {};
+				try {
+					const snap = await get(ref(db, "answers"));
+					answersObj = snap.val() || {};
+				} catch (e) {
+					console.error("load results failed", e);
+				}
+				if (currentState.showResults !== true) return;
+				const { players, stats, gridHtml } = buildResultsData(
+					answersObj,
+					-1,
+				);
+				const medal = ["gold", "silver", "bronze"];
+				const podium = players.length
+					? '<div class="podium">' +
+						players
+							.slice(0, 3)
+							.map(
+								(p, i) =>
+									'<div class="podiumcard ' +
+									medal[i] +
+									'"><div class="podiumrank">#' +
+									(i + 1) +
+									'</div><div class="podiumname">' +
+									p +
+									'</div><div class="podiumscore">' +
+									stats[p].total +
+									"</div></div>",
+							)
+							.join("") +
+						"</div>"
+					: '<p class="sub">No scores yet</p>';
+				app.innerHTML =
+					'<div class="center" style="padding-top:4vh"><h1>Winners</h1></div>' +
+					podium +
+					'<h1 style="margin-top:10px">All Players</h1>' +
+					gridHtml;
+			}
+			function stopAdminSync() {
+				adminUnsubs.forEach((u) => u());
+				adminUnsubs = [];
+			}
+			function renderAdminPanel() {
+				stopAdminSync();
+				restartArmed = false;
+				winnersArmed = false;
+				lastAutoScrollRound = null;
+				if (restartTimer) {
+					clearTimeout(restartTimer);
+					restartTimer = null;
+				}
+				if (winnersTimer) {
+					clearTimeout(winnersTimer);
+					winnersTimer = null;
+				}
+				app.innerHTML = '<div class="center">Loading admin data…</div>';
+				adminState = {
+					idx: 0,
+					revealed: false,
+					gameId: null,
+					showResults: false,
+				};
+				adminAnswers = {};
+				adminUnsubs.push(
+					onValue(ref(db, "state"), (snap) => {
+						adminState = snap.val() || adminState;
+						paintAdmin();
+					}),
+				);
+				adminUnsubs.push(
+					onValue(ref(db, "answers"), (snap) => {
+						adminAnswers = snap.val() || {};
+						paintAdmin();
+					}),
+				);
+			}
+			function adminSetState(patch) {
+				update(ref(db, "state"), patch).catch((e) =>
+					console.error("admin state update failed", e),
+				);
+			}
+			function adminGoto(newIdx) {
+				const clamped = Math.max(
+					0,
+					Math.min(QUESTIONS.length - 1, newIdx),
+				);
+				adminSetState({ idx: clamped, revealed: false });
+			}
+			function adminReveal() {
+				adminSetState({ revealed: !adminState.revealed });
+			}
+			function adminRestart() {
+				if (!restartArmed) {
+					restartArmed = true;
+					paintAdmin();
+					restartTimer = setTimeout(() => {
+						restartArmed = false;
+						paintAdmin();
+					}, 4000);
+					return;
+				}
+				if (restartTimer) {
+					clearTimeout(restartTimer);
+					restartTimer = null;
+				}
+				restartArmed = false;
+				doRestart();
+			}
+			async function doRestart() {
+				try {
+					await Promise.all([
+						remove(ref(db, "answers")),
+						remove(ref(db, "sessions")),
+					]);
+				} catch (e) {
+					alert("Clear failed: " + e.message);
+					return;
+				}
+				adminSetState({
+					idx: 0,
+					revealed: false,
+					gameId: String(Date.now()) + Math.random(),
+					showResults: false,
+				});
+			}
+			function adminToggleWinners() {
+				if (!winnersArmed) {
+					winnersArmed = true;
+					paintAdmin();
+					winnersTimer = setTimeout(() => {
+						winnersArmed = false;
+						paintAdmin();
+					}, 4000);
+					return;
+				}
+				if (winnersTimer) {
+					clearTimeout(winnersTimer);
+					winnersTimer = null;
+				}
+				winnersArmed = false;
+				adminSetState({ showResults: !adminState.showResults });
+			}
+			function paintAdmin() {
+				const qi = adminState.idx || 0;
+				const Q = QUESTIONS[qi];
+				const isLast = qi === QUESTIONS.length - 1;
+				const revealed = !!adminState.revealed;
+				const oldWrap = app.querySelector(".gridwrap");
+				const oldScroll = oldWrap ? oldWrap.scrollLeft : 0;
+				let optsHtml = Q.o
+					.map((o, i) => {
+						const cls = revealed && i === Q.c ? "correct" : "";
+						return (
+							'<div class="opt ' +
+							cls +
+							' disabled"><span class="let">' +
+							letters()[i] +
+							"</span><div>" +
+							o +
+							"</div></div>"
+						);
+					})
+					.join("");
+				const { gridHtml } = buildResultsData(adminAnswers, qi);
+				app.innerHTML =
+					'<div class="namepill"><a id="aback">(back)</a></div>' +
+					"<h1>Admin</h1>" +
+					'<span class="badge" style="background:' +
+					RC[Q.r] +
+					'">' +
+					RN[Q.r] +
+					'</span><span class="qnum" style="color:' +
+					RC[Q.r] +
+					'">Q' +
+					(qi + 1) +
+					"/" +
+					QUESTIONS.length +
+					"</span>" +
+					"<h2>" +
+					Q.q +
+					"</h2>" +
+					optsHtml +
+					'<div class="row">' +
+					'<button class="sec" id="prev" ' +
+					(qi === 0 ? "disabled" : "") +
+					">Prev</button>" +
+					'<button id="rev">' +
+					(revealed ? "Hide Answer" : "Reveal Answer") +
+					"</button>" +
+					'<button class="sec" id="next" ' +
+					(isLast ? "disabled" : "") +
+					">Next</button>" +
+					'<button class="' +
+					(restartArmed ? "" : "sec") +
+					'" id="restart" style="' +
+					(restartArmed ? "background:#e5484d" : "") +
+					'">' +
+					(restartArmed ? "Click again to confirm" : "Restart") +
+					"</button>" +
+					"</div>" +
+					'<h1 style="margin-top:26px">Players × Questions</h1>' +
+					gridHtml +
+					'<div class="row" style="justify-content:center;margin-top:24px">' +
+					'<button class="' +
+					(winnersArmed ? "" : "sec") +
+					'" id="winners" style="' +
+					(winnersArmed ? "background:#e5484d" : "") +
+					'">' +
+					(winnersArmed
+						? "Click again to confirm"
+						: adminState.showResults
+							? "Hide Winners"
+							: "Show Winners to Players") +
+					"</button>" +
+					"</div>";
+				document.getElementById("aback").onclick = () => {
+					stopAdminSync();
+					render();
+				};
+				document.getElementById("prev").onclick = () =>
+					adminGoto(qi - 1);
+				document.getElementById("next").onclick = () =>
+					adminGoto(qi + 1);
+				document.getElementById("rev").onclick = adminReveal;
+				document.getElementById("restart").onclick = adminRestart;
+				document.getElementById("winners").onclick = adminToggleWinners;
+				const gridwrap = app.querySelector(".gridwrap");
+				if (gridwrap) {
+					const pname = gridwrap.querySelector("th.pname");
+					const pnameWidth = pname ? pname.offsetWidth : 0;
+					const scoreHeader =
+						gridwrap.querySelector("thead th.score-col");
+					const scoreWidth = scoreHeader
+						? scoreHeader.offsetWidth
+						: 0;
+					if (Q.r !== lastAutoScrollRound) {
+						lastAutoScrollRound = Q.r;
+						const firstIdx = QUESTIONS.findIndex(
+							(q) => q.r === Q.r,
+						);
+						const firstTarget = gridwrap.querySelector(
+							'th[data-qidx="' + firstIdx + '"]',
+						);
+						if (firstTarget)
+							gridwrap.scrollLeft =
+								firstTarget.offsetLeft - pnameWidth;
+					} else {
+						gridwrap.scrollLeft = oldScroll;
+					}
+					const target = gridwrap.querySelector(
+						'th[data-qidx="' + qi + '"]',
+					);
+					if (target) {
+						const targetLeft = target.offsetLeft;
+						const targetRight = targetLeft + target.offsetWidth;
+						const visibleLeft = gridwrap.scrollLeft + pnameWidth;
+						const visibleRight =
+							gridwrap.scrollLeft +
+							gridwrap.clientWidth -
+							scoreWidth;
+						if (targetLeft < visibleLeft)
+							gridwrap.scrollLeft = targetLeft - pnameWidth;
+						else if (targetRight > visibleRight)
+							gridwrap.scrollLeft =
+								targetRight - gridwrap.clientWidth + scoreWidth;
+					}
+				}
+			}
+
+			function render() {
+				if (!name) {
+					renderName();
+					return;
+				}
+				app.innerHTML = '<div class="center">Loading…</div>';
+				startPlayerSync();
+			}
+			async function boot() {
+				app.innerHTML = '<div class="center">Loading…</div>';
+				await loadQuestions();
+				if (!QUESTIONS.length) {
+					app.innerHTML =
+						'<div class="center"><p class="sub">No questions found in the database.</p></div>';
+					return;
+				}
+				render();
+			}
+			boot();
+		</script>
+	</body>
+</html>
