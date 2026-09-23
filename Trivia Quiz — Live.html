@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Trivia Quiz — Live</title>
+<style>
+:root{--bg:#0f172a;--card:#1a2436;--txt:#fff;--sub:#9fb0c9;--accent:#2f6fed;
+padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100%;}
+.wrap{max-width:640px;margin:0 auto;padding:20px 16px 40px;}
+.badge{display:inline-block;padding:8px 16px;border-radius:8px;font-weight:700;font-size:13px;letter-spacing:.3px;}
+.qnum{float:right;font-weight:800;font-size:28px;opacity:.9;}
+h2{font-size:22px;line-height:1.3;margin:18px 0 20px;}
+.opt{background:var(--card);border:2px solid transparent;border-radius:10px;padding:14px 16px;margin-bottom:10px;
+display:flex;align-items:center;gap:12px;cursor:pointer;transition:.15s;}
+.opt:hover{border-color:#2f6fed55;}
+.opt .let{width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;}
+.opt.picked{border-color:var(--accent);}
+.opt.correct{border-color:#3ecf6a;background:#123821;}
+.opt.wrong{border-color:#e5484d;background:#3a1518;}
+.bar{height:8px;background:#0008;border-radius:4px;overflow:hidden;margin-top:6px;}
+.bar i{display:block;height:100%;background:var(--accent);transition:.3s;}
+.row{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;}
+button{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:12px 18px;font-size:15px;font-weight:600;cursor:pointer;}
+button.sec{background:#2a3650;}
+button:disabled{opacity:.4;}
+.center{text-align:center;padding-top:15vh;}
+input{background:var(--card);border:1px solid #2a3650;color:#fff;padding:12px 14px;border-radius:8px;font-size:16px;width:100%;max-width:280px;}
+.namepill{color:var(--sub);font-size:13px;margin-bottom:8px;}
+.namepill a{color:var(--accent);text-decoration:none;}
+.lb{background:var(--card);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;}
+h1{font-size:20px;margin:0 0 4px;}
+.sub{color:var(--sub);font-size:14px;margin-bottom:20px;}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><div class="center">Loading…</div></div>
+<script>
+const QUESTIONS=[
+{r:1,q:"Roughly how many churches, chapels, and sacred buildings does tiny Slovenia have?",o:["About 500","About 1,200","About 3,000","About 8,000"],c:2},
+{r:1,q:"What distinction does Slovenia hold in the world of firefighting?",o:["Fewest fire stations per capita","Highest number of volunteer firefighters per capita in the world","The world's oldest fire engine museum","Only country with no professional firefighters"],c:1},
+{r:1,q:"Approximately how many volunteer fire brigades (stations) are there across Slovenia?",o:["About 200","About 500","About 1,300","About 5,000"],c:2},
+{r:1,q:"In what year — and in which town — was Slovenia's first volunteer fire brigade founded?",o:["1869, Metlika","1900, Ljubljana","1850, Maribor","1920, Celje"],c:0},
+{r:1,q:"Slovenia has the highest number of ___ per capita in the entire world.",o:["Vineyards","Ski instructors","Beekeepers","Opera singers"],c:2},
+{r:1,q:"What is Slovenia's native honeybee subspecies, the second most widespread bee race on Earth?",o:["The Italian bee","The Carniolan bee","The German dark bee","The Caucasian bee"],c:1},
+{r:1,q:'Slovenia successfully proposed "World Bee Day" to the United Nations. What date is it celebrated?',o:["May 20","June 1","March 21","August 8"],c:0},
+{r:1,q:"Anton Janša, born near Bled, is considered the father of what modern practice?",o:["Modern beekeeping","Modern cheese-making","Modern viticulture","Modern cave diving"],c:0},
+{r:1,q:"Slovenian beekeepers are famous for decorating their hives with what folk-art tradition?",o:["Carved wooden saints","Painted beehive front panels","Stained-glass roofs","Woven straw crowns"],c:1},
+{r:1,q:"The blind, pale salamander found only in Slovenia's karst caves is nicknamed what?",o:["The Human Fish","The Cave Dragon","The Ghost Newt","The Stone Lizard"],c:0},
+{r:1,q:"Which of Slovenia's cave systems is a UNESCO World Heritage Site, distinct from Postojna Cave?",o:["Škocjan Caves","Predjama Caves","Vilenica Caves","Križna Cave"],c:0},
+{r:1,q:"Slovenia's only natural island sits in the middle of which lake?",o:["Lake Bohinj","Lake Bled","Lake Cerknica","Lake Jasna"],c:1},
+{r:1,q:"Triglav, Slovenia's highest peak and national symbol, appears on what other Slovenian icon?",o:["The national flag/coat of arms","The euro coin only","The passport cover only","None of the above"],c:0},
+{r:1,q:'Slovenia\'s tourism slogan "I Feel Slovenia" cleverly highlights a hidden English word inside the country\'s own name. What word?',o:["LOVE","LIVE","SUN","FREE"],c:0},
+{r:1,q:"The famous Lipizzaner horse breed actually originates from a stud farm in which country?",o:["Austria","Slovenia","Hungary","Spain"],c:1},
+{r:1,q:"What is the name of Slovenia's distinctive freestanding wooden hay-drying rack, a true national architectural symbol?",o:["Kozolec","Klet","Planina","Zidanica"],c:0},
+{r:1,q:"Slovenia is one of the few places in Europe where four major landscape types meet. Which of these is NOT one of them?",o:["The Alps","The Mediterranean coast","The Pannonian plain","The Sahara-like desert"],c:3},
+{r:1,q:'The English geological term "karst" (used worldwide for limestone landscapes) comes from which Slovenian region?',o:["The Kras (Karst) Plateau","The Julian Alps","The Vipava Valley","Prekmurje"],c:0},
+{r:1,q:"Which well-preserved Venetian-style coastal town is one of Slovenia's most photographed spots?",o:["Piran","Koper","Izola","Ankaran"],c:0},
+{r:1,q:"Unlike most languages, Slovenian preserves a rare grammatical feature for talking about exactly two of something. What is it called?",o:["Dual number","Binary case","Twin tense","Pair mood"],c:0},
+{r:1,q:"Roughly how many people live in all of Slovenia?",o:["About 500,000","About 2.1 million","About 8 million","About 15 million"],c:1},
+{r:1,q:"Slovenia shares land borders with how many countries?",o:["Two","Three","Four","Six"],c:2},
+{r:1,q:"Slovenia's short but scenic Adriatic coastline is approximately how long?",o:["About 47 km","About 150 km","About 300 km","About 600 km"],c:0},
+{r:2,q:"WARDOGS, the 100-player tactical FPS that just launched, was developed by which studio?",o:["Team17","Bulkhead","Crytek","DICE"],c:1},
+{r:2,q:"Who published WARDOGS?",o:["Bulkhead","Tencent","Team17","Electronic Arts"],c:2},
+{r:2,q:"WARDOGS launched into Steam Early Access on what date?",o:["July 4, 2026","August 22, 2026","September 10, 2026","October 1, 2026"],c:2},
+{r:2,q:"How many players can a single WARDOGS match hold?",o:["Up to 16","Up to 64","Up to 100","Up to 150"],c:2},
+{r:2,q:"How many teams fight over the map's randomized Control Zones in WARDOGS?",o:["Two","Three","Four","Five"],c:1},
+{r:2,q:"WARDOGS' core Control Zone mode is explicitly inspired by which classic multiplayer mode?",o:["Capture the Flag","Search and Destroy","King of the Hill","Battle Royale"],c:2},
+{r:2,q:"How much starting cash does every WARDOGS player begin a match with?",o:["$1,000","$10,000","$50,000","$500"],c:1},
+{r:2,q:"What game engine powers WARDOGS?",o:["CryEngine","Unity","id Tech","Unreal Engine 5"],c:3},
+{r:2,q:"Which studio develops Hunt: Showdown?",o:["Ubisoft","Crytek","Bohemia Interactive","Fatshark"],c:1},
+{r:2,q:"What game engine powers Hunt: Showdown?",o:["Unreal Engine","Unity","CryEngine","Source Engine"],c:2},
+{r:2,q:"Hunt: Showdown's nightmarish monsters infest the swamps of which real-world region?",o:["The Louisiana Bayou","The Everglades","The Appalachian hills","The Texas Panhandle"],c:0},
+{r:2,q:"In what year is Hunt: Showdown originally set?",o:["1850","1895","1899","1920"],c:1},
+{r:2,q:"What is the special supernatural vision hunters use in-game to spot clues and enemies called?",o:["Eagle Eye","Dark Sight","Ghost Vision","Hunter's Instinct"],c:1},
+{r:2,q:"A Hunt: Showdown player's persistent pool of characters and unlocks is called their what?",o:["Legacy","Prestige Line","Bloodline","Bloodweb"],c:2},
+{r:2,q:"Hunt: Showdown was originally announced under a different working title, envisioned as a spiritual successor to Darksiders. What was it?",o:["Hunt: Bayou Nights","Hunt: Horrors of the Gilded Age","Showdown: Origins","Crytek's Hunt"],c:1},
+{r:3,q:"Who is the original creator of Minecraft?",o:['Markus "Notch" Persson',"Jens Bergensten","Gabe Newell","Todd Howard"],c:0},
+{r:3,q:"What studio currently develops and publishes Minecraft?",o:["Rockstar Games","Mojang Studios","Valve","Epic Games"],c:1},
+{r:3,q:"Which company acquired Mojang and now owns Minecraft?",o:["Sony","Amazon","Microsoft","EA"],c:2},
+{r:3,q:'In what year did Minecraft\'s first public "alpha" version release?',o:["2006","2009","2011","2013"],c:1},
+{r:3,q:"Which hostile mob silently sneaks up and explodes near the player?",o:["Enderman","Zombie","Creeper","Ghast"],c:2},
+{r:3,q:"What is required to craft a basic crafting table?",o:["4 wood planks","4 sticks","4 cobblestone","1 log"],c:0},
+{r:3,q:"What is the name of the final boss fought in The End dimension?",o:["The Wither","The Ender Dragon","The Warden","The Elder Guardian"],c:1},
+{r:3,q:"Which boss can be summoned by the player using soul sand (or soul soil) and wither skeleton skulls?",o:["The Ender Dragon","The Warden","The Wither","The Elder Guardian"],c:2},
+{r:3,q:"What is the minimum pickaxe tier required to mine obsidian?",o:["Stone pickaxe","Iron pickaxe","Diamond pickaxe","Golden pickaxe"],c:2},
+{r:3,q:"What extremely rare ore, found only in the Nether, is used to craft the toughest tools and armor?",o:["Emerald","Ancient Debris","Lapis Lazuli","Redstone"],c:1},
+{r:3,q:"Which passive mob is the primary source of leather?",o:["Cow","Chicken","Sheep","Rabbit"],c:0},
+{r:3,q:"The number that determines how a Minecraft world is generated is called the world's what?",o:["Key","Seed","Root","Index"],c:1},
+{r:3,q:"Which major 2020 update completely overhauled the Nether dimension?",o:["The Aquatic Update","The Nether Update","Caves & Cliffs","Village & Pillage"],c:1},
+{r:3,q:"What block is required to build the frame of a Nether Portal?",o:["Obsidian","Blackstone","Basalt","Netherrack"],c:0},
+{r:3,q:"Which mob, when given a saddle plus a carrot on a stick, can be ridden and steered by the player?",o:["Horse","Pig","Llama","Strider"],c:1},
+{r:3,q:"What gem do Villagers use as their primary trading currency?",o:["Diamond","Emerald","Amethyst","Lapis Lazuli"],c:1},
+{r:3,q:"In which game mode do players have unlimited resources and cannot take damage from most sources?",o:["Survival","Creative","Hardcore","Spectator"],c:1},
+{r:3,q:"What permanently happens to a Hardcore-mode world when the player dies?",o:["Nothing changes","The player respawns with less gear","The world is locked — the player can't respawn","The difficulty resets to Easy"],c:2},
+{r:3,q:"Minecraft is widely recognized as the best-selling video game of all time, having overtaken which classic title?",o:["Pac-Man","Tetris","Super Mario Bros.","Grand Theft Auto V"],c:1},
+{r:3,q:"Which fluffy, tameable mob is the main renewable source of wool?",o:["Cow","Llama","Sheep","Rabbit"],c:2},
+{r:3,q:"What is the strongest tool and armor material in the game, introduced in the Nether Update?",o:["Diamond","Netherite","Emerald","Obsidian"],c:1},
+{r:3,q:"What item do players throw into the air to help locate a Stronghold and its End Portal?",o:["Eye of Ender","Compass","Blaze Rod","Nether Star"],c:0},
+{r:3,q:"Which flying Nether mob shoots explosive fireballs at players from a distance?",o:["Blaze","Ghast","Piglin","Wither Skeleton"],c:1},
+{r:3,q:"Blaze Rods, dropped by Blazes, are ground into Blaze Powder — an ingredient essential for crafting what?",o:["Eyes of Ender","Potions of Healing","Nether Stars","Enchanted Books"],c:0},
+{r:3,q:"About how many real-world minutes make up one full in-game Minecraft day-night cycle?",o:["10 minutes","20 minutes","30 minutes","60 minutes"],c:1},
+{r:3,q:"What is the name of Mojang's official annual convention celebrating Minecraft?",o:["MineCon","BlockFest","CraftCon","PixelExpo"],c:0},
+{r:3,q:"What is the title of the 2020 dungeon-crawler spin-off game set in the Minecraft universe?",o:["Minecraft Legends","Minecraft Earth","Minecraft Dungeons","Minecraft Story Mode"],c:2},
+{r:3,q:"What is the title of the live-action Minecraft feature film?",o:["Minecraft: The Movie","A Minecraft Movie","Minecraft Origins","Minecraft Legends"],c:1}
+];
+const RC={1:"#2f6fed",2:"#a3672e",3:"#4c8c3f"};
+const RN={1:"ROUND 1 • SLOVENIA",2:"ROUND 2 • WARDOGS & HUNT",3:"ROUND 3 • MINECRAFT"};
+const app=document.getElementById("app");
+let room=null,user=null,isHost=false,name=localStorage.getItem("quizName")||"";
+let idx=0,revealed=false,tally={},scores={};
+function letters(){return["A","B","C","D"];}
+function renderName(){
+  app.innerHTML='<div class="center"><h1>Trivia Quiz</h1><p class="sub">Pick a nickname to join</p>'+
+  '<input id="ni" placeholder="Your name" maxlength="20"><div class="row" style="justify-content:center"><button id="go">Continue</button></div></div>';
+  document.getElementById("go").onclick=()=>{
+    const v=document.getElementById("ni").value.trim();
+    if(!v)return;
+    name=v;localStorage.setItem("quizName",v);
+    boot();
+  };
+}
+function sendState(){ room && room.emit("state",{idx,revealed}); }
+function renderHost(){
+  const Q=QUESTIONS[idx];
+  const counts=[0,0,0,0]; const list=tally[idx]||{};
+  Object.values(list).forEach(c=>counts[c]++);
+  const total=Object.keys(list).length||1;
+  let optsHtml=Q.o.map((o,i)=>{
+    const pct=Math.round(counts[i]/total*100);
+    const cls=revealed?(i===Q.c?"correct":""):"";
+    return '<div class="opt '+cls+'"><span class="let">'+letters()[i]+'</span><div style="flex:1"><div>'+o+'</div><div class="bar"><i style="width:'+pct+'%"></i></div></div><span>'+counts[i]+'</span></div>';
+  }).join("");
+  const lb=Object.entries(scores).sort((a,b)=>b[1]-a[1]).slice(0,10)
+    .map(([n,s])=>'<div class="lb"><span>'+n+'</span><span>'+s+'</span></div>').join("")||'<p class="sub">No answers yet</p>';
+  app.innerHTML='<div class="namepill">Host: '+name+' <a id="cn">(change)</a></div>'+
+  '<span class="badge" style="background:'+RC[Q.r]+'">'+RN[Q.r]+'</span><span class="qnum" style="color:'+RC[Q.r]+'">Q'+(idx+1)+'</span>'+
+  '<h2>'+Q.q+'</h2>'+optsHtml+
+  '<div class="row"><button class="sec" id="prev" '+(idx===0?"disabled":"")+'>Prev</button>'+
+  '<button id="rev">'+(revealed?"Hide Answer":"Reveal Answer")+'</button>'+
+  '<button class="sec" id="next" '+(idx===QUESTIONS.length-1?"disabled":"")+'>Next</button></div>'+
+  '<h1 style="margin-top:26px">Leaderboard</h1>'+lb;
+  document.getElementById("cn").onclick=()=>{localStorage.removeItem("quizName");renderName();};
+  document.getElementById("prev").onclick=()=>{if(idx>0){idx--;revealed=false;sendState();renderHost();}};
+  document.getElementById("next").onclick=()=>{if(idx<QUESTIONS.length-1){idx++;revealed=false;sendState();renderHost();}};
+  document.getElementById("rev").onclick=()=>{revealed=!revealed;sendState();renderHost();};
+}
+function renderPlayer(){
+  const Q=QUESTIONS[idx];
+  const mine=(tally[idx]||{})[name];
+  let optsHtml=Q.o.map((o,i)=>{
+    let cls=mine===i?"picked":"";
+    if(revealed){ if(i===Q.c)cls="correct"; else if(mine===i)cls="wrong"; }
+    return '<div class="opt '+cls+'" data-i="'+i+'"><span class="let">'+letters()[i]+'</span><div>'+o+'</div></div>';
+  }).join("");
+  app.innerHTML='<div class="namepill">Playing as '+name+' <a id="cn">(change)</a></div>'+
+  '<span class="badge" style="background:'+RC[Q.r]+'">'+RN[Q.r]+'</span><span class="qnum" style="color:'+RC[Q.r]+'">Q'+(idx+1)+'</span>'+
+  '<h2>'+Q.q+'</h2>'+optsHtml;
+  document.getElementById("cn").onclick=()=>{localStorage.removeItem("quizName");renderName();};
+  if(mine===undefined && !revealed){
+    app.querySelectorAll(".opt").forEach(el=>{
+      el.onclick=()=>{
+        const i=+el.dataset.i;
+        tally[idx]=tally[idx]||{}; tally[idx][name]=i;
+        room && room.emit("answer",{name,idx,choice:i});
+        renderPlayer();
+      };
+    });
+  }
+}
+function render(){ isHost?renderHost():renderPlayer(); }
+async function boot(){
+  if(!name){renderName();return;}
+  app.innerHTML='<div class="center">Loading…</div>';
+  room=await claude.use("room").catch(()=>null);
+  user=await claude.use("user").catch(()=>null);
+  isHost = !!(user && user.isOwner && user.isOwner());
+  if(room){
+    room.on("state",(data)=>{ if(!isHost){ idx=data.idx; revealed=data.revealed; render(); } });
+    room.on("answer",(data)=>{
+      tally[data.idx]=tally[data.idx]||{};
+      tally[data.idx][data.name]=data.choice;
+      if(isHost){
+        const Q=QUESTIONS[data.idx];
+        if(data.choice===Q.c){ scores[data.name]=(scores[data.name]||0)+1; }
+        render();
+      }
+    });
+    room.onPeers && room.onPeers(()=>{ if(isHost) sendState(); });
+  }
+  render();
+}
+boot();
+</script>
+</body>
+</html>
